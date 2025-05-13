@@ -6,13 +6,14 @@ At each depth, all internal links are discovered and crawled in parallel, up to 
 Usage: Set the start URL and max_depth in main(), then run as a script.
 """
 import asyncio
+from colorama import init, Fore
 from urllib.parse import urldefrag
 from crawl4ai import (
     AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode,
     MemoryAdaptiveDispatcher
 )
 
-async def crawl_recursive_batch(start_urls, max_depth=3, max_concurrent=10):
+async def crawl_recursive_batch(start_urls, max_depth=1, max_concurrent=10):
     browser_config = BrowserConfig(headless=True, verbose=False)
     run_config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
@@ -32,6 +33,7 @@ async def crawl_recursive_batch(start_urls, max_depth=3, max_concurrent=10):
     current_urls = set([normalize_url(u) for u in start_urls])
 
     async with AsyncWebCrawler(config=browser_config) as crawler:
+        print(Fore.GREEN + f"max_depth: {max_depth}")
         for depth in range(max_depth):
             print(f"\n=== Crawling Depth {depth+1} ===")
             # Only crawl URLs we haven't seen yet (ignoring fragments)
@@ -66,4 +68,6 @@ async def crawl_recursive_batch(start_urls, max_depth=3, max_concurrent=10):
             current_urls = next_level_urls
 
 if __name__ == "__main__":
-    asyncio.run(crawl_recursive_batch(["https://ai.pydantic.dev/"], max_depth=3, max_concurrent=10))
+    init()
+    asyncio.run(crawl_recursive_batch(["https://ai.pydantic.dev/"], max_depth=0, max_concurrent=20))    
+    
