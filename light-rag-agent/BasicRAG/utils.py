@@ -151,4 +151,5 @@ def format_results_as_context(query_results: Dict[str, Any]) -> str:
         # Add document content
         context += f"Content: {doc}\n\n"
     
+    print(f'---> context {context}')
     return context
