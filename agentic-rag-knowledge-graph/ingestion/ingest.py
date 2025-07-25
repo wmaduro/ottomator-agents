@@ -115,7 +115,7 @@ class DocumentIngestionPipeline:
         
         # Clean existing data if requested
         if self.clean_before_ingest:
-            await self._clean_databases()
+            await self.clean_databases()
         
         # Find all markdown files
         markdown_files = self._find_markdown_files()
@@ -383,7 +383,7 @@ class DocumentIngestionPipeline:
                 
                 return document_id
     
-    async def _clean_databases(self):
+    async def clean_databases(self):
         """Clean existing data from databases."""
         logger.warning("Cleaning existing data from databases...")
         
@@ -479,6 +479,30 @@ async def main():
     finally:
         await pipeline.close()
 
+async def clean_databases_lixo():
+    """Clean existing data from databases."""
+    logger.warning("Cleaning existing data from databases...")
+
+    # Clean PostgreSQL
+    async with db_pool.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute("DELETE FROM messages")
+            await conn.execute("DELETE FROM sessions")
+            await conn.execute("DELETE FROM chunks")
+            await conn.execute("DELETE FROM documents")
+
+    logger.info("Cleaned PostgreSQL database")
+
+    # Clean knowledge graph
+    graph_builder = create_graph_builder()
+    await graph_builder.clear_graph()
+    logger.info("Cleaned knowledge graph")
+
+
+async def main2():
+    await clean_databases_lixo()
 
 if __name__ == "__main__":
+    # print(f"foi.........")
     asyncio.run(main())
+    # asyncio.run(main2())

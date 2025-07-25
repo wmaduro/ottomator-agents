@@ -54,8 +54,8 @@ class GraphitiClient:
         self.llm_api_key = os.getenv("LLM_API_KEY")
         self.llm_choice = os.getenv("LLM_CHOICE", "gpt-4.1-mini")
         
-        if not self.llm_api_key:
-            raise ValueError("LLM_API_KEY environment variable not set")
+        # if not self.llm_api_key:
+        #     raise ValueError("LLM_API_KEY environment variable not set")
         
         # Embedding configuration
         self.embedding_base_url = os.getenv("EMBEDDING_BASE_URL", "https://api.openai.com/v1")
@@ -63,8 +63,8 @@ class GraphitiClient:
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
         self.embedding_dimensions = int(os.getenv("VECTOR_DIMENSION", "1536"))
         
-        if not self.embedding_api_key:
-            raise ValueError("EMBEDDING_API_KEY environment variable not set")
+        # if not self.embedding_api_key:
+        #     raise ValueError("EMBEDDING_API_KEY environment variable not set")
         
         self.graphiti: Optional[Graphiti] = None
         self._initialized = False
