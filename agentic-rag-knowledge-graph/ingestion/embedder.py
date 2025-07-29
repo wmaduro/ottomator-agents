@@ -12,7 +12,7 @@ import json
 from openai import RateLimitError, APIError
 from dotenv import load_dotenv
 
-from .chunker import DocumentChunk
+from chunker import DocumentChunk
 
 # Import flexible providers
 try:
@@ -28,6 +28,7 @@ except ImportError:
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+logging.getLogger(__name__).setLevel(logging.ERROR)
 
 # Initialize client with flexible provider
 embedding_client = get_embedding_client()
@@ -374,7 +375,7 @@ def create_embedder(
 # Example usage
 async def main():
     """Example usage of the embedder."""
-    from .chunker import ChunkingConfig, create_chunker
+    from chunker import ChunkingConfig, create_chunker
     
     # Create chunker and embedder
     config = ChunkingConfig(chunk_size=200, use_semantic_splitting=False)

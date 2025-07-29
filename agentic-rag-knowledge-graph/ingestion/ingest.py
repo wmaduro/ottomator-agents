@@ -15,9 +15,11 @@ import argparse
 import asyncpg
 from dotenv import load_dotenv
 
-from .chunker import ChunkingConfig, create_chunker, DocumentChunk
-from .embedder import create_embedder
-from .graph_builder import create_graph_builder
+from utils.utils import my_log
+
+from chunker import ChunkingConfig, create_chunker, DocumentChunk
+from embedder import create_embedder
+from graph_builder import create_graph_builder
 
 # Import agent utilities
 try:
@@ -37,7 +39,7 @@ except ImportError:
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
+logging.getLogger(__name__).setLevel(logging.ERROR)
 
 class DocumentIngestionPipeline:
     """Pipeline for ingesting documents into vector DB and knowledge graph."""
@@ -178,7 +180,9 @@ class DocumentIngestionPipeline:
         # Extract metadata from content
         document_metadata = self._extract_document_metadata(document_content, file_path)
         
-        logger.info(f"Processing document: {document_title}")
+        # logger.debug(f"-----------------------> Processing document: {document_title}")
+        my_log(f'Processing document: {document_title}')
+        my_log(f'document_metadata: {document_metadata}')
         
         # Chunk the document
         chunks = await self.chunker.chunk_document(
@@ -440,7 +444,7 @@ async def main():
     )
     
     def progress_callback(current: int, total: int):
-        print(f"Progress: {current}/{total} documents processed")
+        my_log(f"Progress: {current}/{total} documents processed\n")
     
     try:
         start_time = datetime.now()
@@ -454,13 +458,13 @@ async def main():
         print("\n" + "="*50)
         print("INGESTION SUMMARY")
         print("="*50)
-        print(f"Documents processed: {len(results)}")
-        print(f"Total chunks created: {sum(r.chunks_created for r in results)}")
-        print(f"Total entities extracted: {sum(r.entities_extracted for r in results)}")
-        print(f"Total graph episodes: {sum(r.relationships_created for r in results)}")
-        print(f"Total errors: {sum(len(r.errors) for r in results)}")
-        print(f"Total processing time: {total_time:.2f} seconds")
-        print()
+        # print(f"Documents processed: {len(results)}")
+        # print(f"Total chunks created: {sum(r.chunks_created for r in results)}")
+        # print(f"Total entities extracted: {sum(r.entities_extracted for r in results)}")
+        # print(f"Total graph episodes: {sum(r.relationships_created for r in results)}")
+        # print(f"Total errors: {sum(len(r.errors) for r in results)}")
+        # print(f"Total processing time: {total_time:.2f} seconds")
+        # print()
         
         # Print individual results
         for result in results:
@@ -502,7 +506,12 @@ async def clean_databases_lixo():
 async def main2():
     await clean_databases_lixo()
 
+
+def clear_console():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 if __name__ == "__main__":
+    clear_console()
     # print(f"foi.........")
     asyncio.run(main())
     # asyncio.run(main2())

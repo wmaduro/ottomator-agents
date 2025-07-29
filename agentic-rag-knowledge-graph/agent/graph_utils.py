@@ -2,7 +2,7 @@
 Graph utilities for Neo4j/Graphiti integration.
 """
 
-import os
+import os, time
 import json
 import logging
 from typing import List, Dict, Any, Optional, Tuple
@@ -18,10 +18,16 @@ from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
 from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerClient
 from dotenv import load_dotenv
 
+from ingestion.utils.utils import my_log
+
 # Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+logging.getLogger(__name__).setLevel(logging.ERROR)
+logging.getLogger("neo4j").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
+logging.getLogger("graphiti_core.graphiti").setLevel(logging.ERROR)
 
 # Help from this PR for setting up the custom clients: https://github.com/getzep/graphiti/pull/601/files
 class GraphitiClient:
@@ -150,6 +156,7 @@ class GraphitiClient:
         # Import EpisodeType for proper source handling
         from graphiti_core.nodes import EpisodeType
         
+        start_time = time.perf_counter()
         await self.graphiti.add_episode(
             name=episode_id,
             episode_body=content,
@@ -158,7 +165,9 @@ class GraphitiClient:
             reference_time=episode_timestamp
         )
         
-        logger.info(f"Added episode {episode_id} to knowledge graph")
+        my_log(f"<<<<<<<<<<< after graphiti.add_episode | time: {time.perf_counter() - start_time:.4f} s")
+
+        # logger.info(f"Added episode {episode_id} to knowledge graph")
     
     async def search(
         self,

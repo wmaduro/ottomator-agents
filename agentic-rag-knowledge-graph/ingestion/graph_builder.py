@@ -2,7 +2,7 @@
 Knowledge graph builder for extracting entities and relationships.
 """
 
-import os
+import os, time
 import logging
 from typing import List, Dict, Any, Optional, Set, Tuple
 from datetime import datetime, timezone
@@ -12,7 +12,9 @@ import re
 from graphiti_core import Graphiti
 from dotenv import load_dotenv
 
-from .chunker import DocumentChunk
+from utils.utils import my_log
+
+from chunker import DocumentChunk
 
 # Import graph utilities
 try:
@@ -28,7 +30,7 @@ except ImportError:
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
+logging.getLogger(__name__).setLevel(logging.ERROR)
 
 class GraphBuilder:
     """Builds knowledge graph from document chunks."""
@@ -77,7 +79,7 @@ class GraphBuilder:
         if not chunks:
             return {"episodes_created": 0, "errors": []}
         
-        logger.info(f"Adding {len(chunks)} chunks to knowledge graph for document: {document_title}")
+        # my_log(f"Adding {len(chunks)} chunks to knowledge graph for document: {document_title}")
         logger.info("⚠️ Large chunks will be truncated to avoid Graphiti token limits.")
         
         # Check for oversized chunks and warn
@@ -105,6 +107,8 @@ class GraphBuilder:
                 source_description = f"Document: {document_title} (Chunk: {chunk.index})"
                 
                 # Add episode to graph
+                start_time = time.perf_counter()
+
                 await self.graph_client.add_episode(
                     episode_id=episode_id,
                     content=episode_content,
@@ -118,9 +122,13 @@ class GraphBuilder:
                         "processed_length": len(episode_content)
                     }
                 )
+                # my_log(f"<<<<<<<<<<< after add_epsode | time: {time.perf_counter() - start_time:.4f} s")
+
+                # my_log(f"episode_content: {episode_content}")
+                # my_log(f"chunk.content: {chunk.content}")
                 
                 episodes_created += 1
-                logger.info(f"✓ Added episode {episode_id} to knowledge graph ({episodes_created}/{len(chunks)})")
+                # my_log(f"✓ Added episode {episode_id} to knowledge graph ({episodes_created}/{len(chunks)})")
                 
                 # Small delay between each episode to reduce API pressure
                 if i < len(chunks) - 1:
@@ -408,7 +416,7 @@ def create_graph_builder() -> GraphBuilder:
 # Example usage
 async def main():
     """Example usage of the graph builder."""
-    from .chunker import ChunkingConfig, create_chunker
+    from chunker import ChunkingConfig, create_chunker
     
     # Create chunker and graph builder
     config = ChunkingConfig(chunk_size=300, use_semantic_splitting=False)
@@ -450,7 +458,7 @@ async def main():
             document_metadata={"topic": "AI", "date": "2024"}
         )
         
-        print(f"Graph building result: {result}")
+        # my_log(f"Graph building result: {result}")
         
     except Exception as e:
         print(f"Graph building failed: {e}")
