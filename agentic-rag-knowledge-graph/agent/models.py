@@ -223,13 +223,14 @@ class IngestionConfig(BaseModel):
 
 class IngestionResult(BaseModel):
     """Result of document ingestion."""
-    document_id: str
+  #  document_id: str
     title: str
     chunks_created: int
     entities_extracted: int
     relationships_created: int
     processing_time_ms: float
     errors: List[str] = Field(default_factory=list)
+    file_name: str = "none"
 
 
 # Error Models

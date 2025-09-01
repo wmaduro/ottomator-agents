@@ -3,6 +3,7 @@ Main ingestion script for processing markdown documents into vector DB and knowl
 """
 
 import os
+import time
 import asyncio
 import logging
 import json
@@ -126,13 +127,13 @@ class DocumentIngestionPipeline:
             logger.warning(f"No markdown files found in {self.documents_folder}")
             return []
         
-        logger.info(f"Found {len(markdown_files)} markdown files to process")
+        my_log(f"Found {len(markdown_files)} markdown files to process")
         
         results = []
         
         for i, file_path in enumerate(markdown_files):
             try:
-                logger.info(f"Processing file {i+1}/{len(markdown_files)}: {file_path}")
+                my_log(f"Processing file {i+1}/{len(markdown_files)}: {file_path}")
                 
                 result = await self._ingest_single_document(file_path)
                 results.append(result)
@@ -141,7 +142,7 @@ class DocumentIngestionPipeline:
                     progress_callback(i + 1, len(markdown_files))
                 
             except Exception as e:
-                logger.error(f"Failed to process {file_path}: {e}")
+                my_log(f"Failed to process {file_path}: {e}")
                 results.append(IngestionResult(
                     document_id="",
                     title=os.path.basename(file_path),
@@ -181,8 +182,8 @@ class DocumentIngestionPipeline:
         document_metadata = self._extract_document_metadata(document_content, file_path)
         
         # logger.debug(f"-----------------------> Processing document: {document_title}")
-        my_log(f'Processing document: {document_title}')
-        my_log(f'document_metadata: {document_metadata}')
+        # my_log(f'Processing document: {document_title}')
+        # my_log(f'document_metadata: {document_metadata}')
         
         # Chunk the document
         chunks = await self.chunker.chunk_document(
@@ -201,7 +202,8 @@ class DocumentIngestionPipeline:
                 entities_extracted=0,
                 relationships_created=0,
                 processing_time_ms=(datetime.now() - start_time).total_seconds() * 1000,
-                errors=["No chunks created"]
+                errors=["No chunks created"],
+                file_name=file_path
             )
         
         logger.info(f"Created {len(chunks)} chunks")
@@ -231,7 +233,7 @@ class DocumentIngestionPipeline:
             document_metadata
         )
         
-        logger.info(f"Saved document to PostgreSQL with ID: {document_id}")
+        my_log(f"Saved document to PostgreSQL with ID: {document_id}")
         
         # Add to knowledge graph (if enabled)
         relationships_created = 0
@@ -269,7 +271,8 @@ class DocumentIngestionPipeline:
             entities_extracted=entities_extracted,
             relationships_created=relationships_created,
             processing_time_ms=processing_time,
-            errors=graph_errors
+            errors=graph_errors,
+            file_name=file_path
         )
     
     def _find_markdown_files(self) -> List[str]:
@@ -419,6 +422,12 @@ async def main():
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     
     args = parser.parse_args()
+
+    await clean_databases_lixo()
+
+    # my_log("sleeping.......")
+    # time.sleep(60)
+    # my_log("going.......")
     
     # Configure logging
     log_level = logging.DEBUG if args.verbose else logging.INFO
@@ -469,11 +478,11 @@ async def main():
         # Print individual results
         for result in results:
             status = "✓" if not result.errors else "✗"
-            print(f"{status} {result.title}: {result.chunks_created} chunks, {result.entities_extracted} entities")
+            print(f"{status} {result.file_name}: {result.chunks_created} chunks, {result.entities_extracted} entities")
             
             if result.errors:
                 for error in result.errors:
-                    print(f"  Error: {error}")
+                    print(f" ---> Error: {error}")
         
     except KeyboardInterrupt:
         print("\nIngestion interrupted by user")
@@ -495,12 +504,12 @@ async def clean_databases_lixo():
             await conn.execute("DELETE FROM chunks")
             await conn.execute("DELETE FROM documents")
 
-    logger.info("Cleaned PostgreSQL database")
+    my_log("Cleaned PostgreSQL database")
 
     # Clean knowledge graph
     graph_builder = create_graph_builder()
     await graph_builder.clear_graph()
-    logger.info("Cleaned knowledge graph")
+    my_log("Cleaned knowledge graph")
 
 
 async def main2():
@@ -512,6 +521,5 @@ def clear_console():
 
 if __name__ == "__main__":
     clear_console()
-    # print(f"foi.........")
     asyncio.run(main())
     # asyncio.run(main2())
